@@ -6,6 +6,7 @@ use App\Http\Controllers\StoreController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminCategoryController;
@@ -33,24 +34,32 @@ Route::post('/checkout', [CheckoutController::class, 'place'])->name('checkout.p
 Route::get('/thanks/{orderId}', [CheckoutController::class, 'thanks'])->name('checkout.thanks');
 
 // =====================
-// Admin Routes (Simple)
+// Admin Auth Routes
 // =====================
 Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/login', [AdminAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->name('login.post');
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+});
 
-    // Admin dashboard redirect
+// =====================
+// Admin Protected Routes
+// =====================
+Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
+
     Route::get('/', fn () => redirect()->route('admin.products.index'))->name('home');
 
-    // ✅ Categories CRUD
+    // Categories CRUD
     Route::resource('categories', AdminCategoryController::class)->except(['show']);
 
-    // ✅ Quick Category Add (from product create page)
+    // Quick Category Add (from product page)
     Route::post('categories/quick', [AdminCategoryController::class, 'quickStore'])
         ->name('categories.quick');
 
-    // ✅ Products CRUD
+    // Products CRUD
     Route::resource('products', AdminProductController::class)->except(['show']);
 
-    // ✅ Orders
+    // Orders
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::post('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
